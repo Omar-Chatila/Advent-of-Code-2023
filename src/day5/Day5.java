@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class Day5 {
 
@@ -23,7 +24,6 @@ public class Day5 {
     }
 
     static List<List<Map>> sourceToDestList = new ArrayList<>();
-    static Long[] nextSeed;
     static List<Long> seeds = new ArrayList<>();
     static final int maxRangeSize = (int) 1E6;
 
@@ -80,26 +80,32 @@ public class Day5 {
         return intervals;
     }
 
-    private static long getSecondResult() {
+    private static long getSecondResult() throws InterruptedException, ExecutionException {
         List<Interval> intervals = (setIntervals(seeds));
         long min = Long.MAX_VALUE;
-        int ind = 0;
+        ExecutorService executor = Executors.newFixedThreadPool(intervals.size());
+        List<Future<Long>> minCandidates = new ArrayList<>();
         for (Interval interval : intervals) {
-            for (long i = interval.start; i < interval.end; i++) {
-                min = Math.min(min, getSingleLocation(i));
-            }
-            // see progress
-            System.out.println("(" + ++ind + "/" + intervals.size() + ")");
+            Callable<Long> callable = () -> {
+                long innerMin = Long.MAX_VALUE;
+                for (long i = interval.start; i < interval.end; i++) {
+                    innerMin = Math.min(innerMin, getSingleLocation(i));
+                }
+                return innerMin;
+            };
+            Future<Long> future = executor.submit(callable);
+            minCandidates.add(future);
         }
+
+        for (Future<Long> future : minCandidates) {
+            min = Math.min(min, future.get());
+        }
+        executor.shutdown();
+
         return min;
     }
 
     private static long getFirstResult() {
-        nextSeed = new Long[seeds.size()];
-        int j = 0;
-        for (Long seed : seeds) {
-            nextSeed[j++] = seed;
-        }
         long min = Long.MAX_VALUE;
         for (long seed : seeds) {
             min = Math.min(min, getSingleLocation(seed));
@@ -127,9 +133,13 @@ public class Day5 {
         try {
             setData();
             long firstResult = getFirstResult();
-            long secondResult = getSecondResult();
+            long secondResult;// getSecondResult();
+            long start = System.nanoTime();
+            secondResult = getSecondResult();
+            long time = System.nanoTime() - start;
+            System.out.println(time / 1E6 + "ms");
             System.out.println("First part: " + firstResult + "\nSecond part: " + secondResult);
-        } catch (IOException e) {
+        } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
