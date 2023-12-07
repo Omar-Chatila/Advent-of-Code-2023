@@ -9,11 +9,11 @@ import java.util.List;
 
 public class Day7 {
 
-    record Hand(String card, int bid) {
+    record Hand(String cards, int bid) {
         double getValue() {
             double value = 0;
             int i = 5;
-            for (char c : card.toCharArray()) {
+            for (char c : cards.toCharArray()) {
                 switch (c) {
                     case 'A' -> value += 13 * Math.pow(15, i);
                     case 'K' -> value += 12 * Math.pow(15, i);
@@ -29,7 +29,7 @@ public class Day7 {
 
         @Override
         public String toString() {
-            return "[" + card + "]";
+            return "[" + cards + "]";
         }
     }
 
@@ -57,15 +57,9 @@ public class Day7 {
     }
 
     private static void clearLists() {
-        handStack.clear();
-        fiveKinds.clear();
-        fourKinds.clear();
-        fullHouses.clear();
-        threeKinds.clear();
-        twoPairs.clear();
-        onePairs.clear();
-        highHands.clear();
-        sortedList.clear();
+        for (List<Hand> list : List.of(handStack, fiveKinds, fourKinds, fullHouses, threeKinds, twoPairs, onePairs, highHands, sortedList)) {
+            list.clear();
+        }
     }
 
     private static void setFirstOrder(boolean partTwo) {
@@ -90,7 +84,7 @@ public class Day7 {
 
     static int numberJokers(Hand hand) {
         int count = 0;
-        for (char c : hand.card.toCharArray()) {
+        for (char c : hand.cards.toCharArray()) {
             if (c == '1') count++;
         }
         return count;
@@ -112,7 +106,7 @@ public class Day7 {
         sortedList.addAll(fullHouses);
     }
 
-    public static long getResult() {
+    public static long getScore() {
         int result = 0;
         for (int i = 0; i < sortedList.size(); i++) {
             result += sortedList.get(i).bid * (i + 1);
@@ -122,8 +116,8 @@ public class Day7 {
 
     private static boolean isFiveKind(Hand hand, boolean partTwo) {
         if (!partTwo)
-            return hand.card.chars().distinct().count() == 1;
-        return hand.card.chars().distinct().count() == 1 || (sameCards(hand) + numberJokers(hand) == 5);
+            return hand.cards.chars().distinct().count() == 1;
+        return hand.cards.chars().distinct().count() == 1 || (sameCards(hand) + numberJokers(hand) == 5);
     }
 
     private static boolean isFourKind(Hand hand, boolean partTwo) {
@@ -134,7 +128,7 @@ public class Day7 {
 
     private static boolean isFullHouse(Hand hand, boolean partTwo) {
         if (!partTwo)
-            return sameCards(hand) == 3 && hand.card.chars().distinct().count() == 2;
+            return sameCards(hand) == 3 && hand.cards.chars().distinct().count() == 2;
         return isFullHouse(hand, false) ||
                 isTwoPair(hand, false) && numberJokers(hand) == 1;
 
@@ -148,24 +142,24 @@ public class Day7 {
 
     private static boolean isTwoPair(Hand hand, boolean partTwo) {
         if (!partTwo)
-            return sameCards(hand) == 2 && hand.card.chars().distinct().count() == 3;
-        return (sameCards(hand) == 2 && hand.card.chars().distinct().count() == 3) || sameCards(hand) == 2 && numberJokers(hand) == 1;
+            return sameCards(hand) == 2 && hand.cards.chars().distinct().count() == 3;
+        return (sameCards(hand) == 2 && hand.cards.chars().distinct().count() == 3) || sameCards(hand) == 2 && numberJokers(hand) == 1;
     }
 
     private static boolean isOnePair(Hand hand, boolean partTwo) {
         if (!partTwo)
-            return sameCards(hand) == 2 && hand.card.chars().distinct().count() == 4;
-        return (sameCards(hand) == 2 && hand.card.chars().distinct().count() == 4) || isHighCard(hand) && numberJokers(hand) == 1;
+            return sameCards(hand) == 2 && hand.cards.chars().distinct().count() == 4;
+        return (sameCards(hand) == 2 && hand.cards.chars().distinct().count() == 4) || isHighCard(hand) && numberJokers(hand) == 1;
     }
 
 
     private static boolean isHighCard(Hand hand) {
-        return hand.card.chars().distinct().count() == 5;
+        return hand.cards.chars().distinct().count() == 5;
     }
 
 
     private static int sameCards(Hand hand) {
-        String toCount = hand.card.replaceAll("1", "");
+        String toCount = hand.cards.replaceAll("1", "");
         int maxTally = 1;
         for (int i = 0; i < toCount.length() - 1; i++) {
             int tally = 1;
@@ -180,24 +174,20 @@ public class Day7 {
         return maxTally;
     }
 
-    private static void getPart1() throws IOException {
-        setData(false);
-        setFirstOrder(false);
+    private static void getResult(boolean isPartTwo) {
+        try {
+            setData(isPartTwo);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        setFirstOrder(isPartTwo);
         setSecondOrder();
         Collections.reverse(sortedList);
-        System.out.println(getResult());
+        System.out.println(getScore());
     }
 
-    private static void getPart2() throws IOException {
-        setData(true);
-        setFirstOrder(true);
-        setSecondOrder();
-        Collections.reverse(sortedList);
-        System.out.println(getResult());
-    }
-
-    public static void main(String[] args) throws IOException {
-        getPart1();
-        getPart2();
+    public static void main(String[] args) {
+        getResult(false);
+        getResult(true);
     }
 }
