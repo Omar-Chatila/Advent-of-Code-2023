@@ -12,7 +12,7 @@ public class Day9 {
     static List<List<Integer>> valueHistories = new ArrayList<>();
 
     static void setData() {
-        List<String> lines = null;
+        List<String> lines;
         try {
             lines = Files.readAllLines(Paths.get("src/day9/input.txt"));
         } catch (IOException e) {
